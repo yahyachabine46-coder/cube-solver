@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Car Game Prototype</title>
+<style>
+body { margin:0; overflow:hidden; background:#111; }
+canvas { display:block; }
+#info {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  font-family: Arial;
+}
+</style>
+</head>
+<body>
+
+<div id="info">
+  Controls: W A S D / Arrow Keys<br>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// ===== CAR =====
+const car = {
+  x: 0,
+  y: 0,
+  angle: 0,
+  speed: 0
+};
+
+// ===== CAMERA =====
+const camera = {
+  x: 0,
+  y: 0
+};
+
+// ===== INPUT =====
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+// ===== ROAD =====
+const roadWidth = 2000;
+
+// ===== UPDATE =====
+function update() {
+  // controls
+  if (keys["w"] || keys["arrowup"]) car.speed += 0.2;
+  if (keys["s"] || keys["arrowdown"]) car.speed -= 0.2;
+
+  if (keys["a"] || keys["arrowleft"]) car.angle -= 0.04;
+  if (keys["d"] || keys["arrowright"]) car.angle += 0.04;
+
+  // friction
+  car.speed *= 0.97;
+
+  // move car
+  car.x += Math.cos(car.angle) * car.speed;
+  car.y += Math.sin(car.angle) * car.speed;
+
+  // camera follows
+  camera.x = car.x - canvas.width / 2;
+  camera.y = car.y - canvas.height / 2;
+}
+
+// ===== DRAW =====
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // background
+  ctx.fillStyle = "#2b2b2b";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // road
+  ctx.fillStyle = "#444";
+  ctx.fillRect(
+    -camera.x - roadWidth/2,
+    -50000,
+    roadWidth,
+    100000
+  );
+
+  // center line
+  ctx.strokeStyle = "white";
+  ctx.setLineDash([20,20]);
+  ctx.beginPath();
+  for(let i=-10000;i<10000;i+=100){
+    ctx.moveTo(-camera.x, i - camera.y);
+    ctx.lineTo(-camera.x, i+50 - camera.y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // car
+  ctx.save();
+  ctx.translate(car.x - camera.x, car.y - camera.y);
+  ctx.rotate(car.angle);
+
+  ctx.fillStyle = "red";
+  ctx.fillRect(-20,-10,40,20);
+
+  // windshield
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,-6,15,12);
+
+  ctx.restore();
+}
+
+// ===== LOOP =====
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+window.addEventListener("resize", ()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
